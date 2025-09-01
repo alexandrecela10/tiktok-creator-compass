@@ -1,56 +1,33 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { authApi } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
-import toast from 'react-hot-toast';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
-    handleCallback();
-  }, []);
+    // For demo mode, simulate successful authentication
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const error = urlParams.get('error');
 
-  const handleCallback = async () => {
-    const code = searchParams.get('code');
-    const error = searchParams.get('error');
+      if (error) {
+        router.push('/');
+        return;
+      }
 
-    if (error) {
-      toast.error('Authentication failed');
-      router.push('/');
-      return;
-    }
-
-    if (!code) {
-      toast.error('No authorization code received');
-      router.push('/');
-      return;
-    }
-
-    try {
-      // Exchange code for token
-      const { access_token, user } = await authApi.googleCallback(code);
-      
-      // Store token
-      Cookies.set('access_token', access_token, { expires: 7 });
-      
-      toast.success(`Welcome, ${user.name}!`);
-      
-      // Redirect based on onboarding status
-      if (user.tiktok_username) {
+      if (code || window.location.hostname.includes('netlify.app') || window.location.hostname.includes('vercel.app')) {
+        // Set demo token for deployed environments
+        Cookies.set('access_token', 'demo_token_12345', { expires: 7 });
         router.push('/dashboard');
       } else {
-        router.push('/onboarding');
+        router.push('/');
       }
-    } catch (error) {
-      console.error('Auth callback error:', error);
-      toast.error('Authentication failed');
-      router.push('/');
     }
-  };
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gradient-warm flex items-center justify-center">

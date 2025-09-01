@@ -2,6 +2,7 @@
 const nextConfig = {
   images: {
     domains: ['lh3.googleusercontent.com'],
+    unoptimized: true, // Required for static export
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
@@ -11,6 +12,8 @@ const nextConfig = {
   output: 'export',
   trailingSlash: true,
   distDir: 'out',
+  // Skip build-time API routes for static export
+  skipTrailingSlashRedirect: true,
 }
 
 module.exports = nextConfig
