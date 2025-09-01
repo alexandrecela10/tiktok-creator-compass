@@ -16,10 +16,24 @@ import {
 import { useRouter } from 'next/navigation';
 import { formatNumber } from '@/lib/utils';
 
+interface ContentRecommendation {
+  title: string;
+  description: string;
+  impact_score: number;
+  category: string;
+}
+
+interface TopFollower {
+  username: string;
+  followers: number;
+  match_score: number;
+  bio: string;
+}
+
 export default function RecommendationsPage() {
   const router = useRouter();
-  const [recommendations, setRecommendations] = useState<any>(null);
-  const [topFollowers, setTopFollowers] = useState<any>([]);
+  const [recommendations, setRecommendations] = useState<{ content_recommendations: ContentRecommendation[] } | null>(null);
+  const [topFollowers, setTopFollowers] = useState<TopFollower[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +43,14 @@ export default function RecommendationsPage() {
   const fetchRecommendations = async () => {
     try {
       const data = await recommendationsApi.getCreators();
-      setRecommendations(data);
+      // Transform API data to match our interface
+      const transformedData = Array.isArray(data) ? data.map((item: any) => ({
+        title: item.title || item.name || 'Recommendation',
+        description: item.description || item.bio || 'No description available',
+        impact_score: item.impact_score || item.score || 8.0,
+        category: item.category || 'General'
+      })) : [];
+      setRecommendations({ content_recommendations: transformedData });
       
       // Sample top followers from target audience
       setTopFollowers([
@@ -114,7 +135,7 @@ export default function RecommendationsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recommendations?.content_recommendations?.map((rec, index) => (
+            {recommendations?.content_recommendations?.map((rec: ContentRecommendation, index: number) => (
               <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-semibold text-gray-900">{rec.title}</h3>
@@ -148,7 +169,7 @@ export default function RecommendationsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {topFollowers.map((follower, index) => (
+            {topFollowers.map((follower: TopFollower, index: number) => (
               <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0">
