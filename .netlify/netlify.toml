@@ -7,10 +7,10 @@ headers = []
 [functions."*"]
 
 [build]
-publish = "/Users/alexandrecela/Documents/universal_roi_datasets/CascadeProjects/windsurf-project/tiktok-creator-compass/frontend/out"
+publish = "/Users/alexandrecela/Documents/CascadeProjects/windsurf-project/tiktok-creator-compass/frontend/out"
 publishOrigin = "config"
 commandOrigin = "config"
-base = "/Users/alexandrecela/Documents/universal_roi_datasets/CascadeProjects/windsurf-project/tiktok-creator-compass/frontend"
+base = "/Users/alexandrecela/Documents/CascadeProjects/windsurf-project/tiktok-creator-compass/frontend"
 command = "npm install && npm run build"
 
 [build.environment]
