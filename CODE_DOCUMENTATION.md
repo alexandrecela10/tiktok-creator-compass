@@ -4,7 +4,7 @@ This document explains all the code in the TikTok Creator Compass project in sim
 
 ## What This App Does
 
-The TikTok Creator Compass is like having a personal coach for TikTok creators. It helps creators understand how well their content is performing, gives them insights about their audience, and suggests ways to grow their following. Think of it as a dashboard that shows you everything important about your TikTok account in one place.
+The TikTok Creator Compass is like having a competitive intelligence agent for TikTok creators. It discovers and analyzes successful creators in your niche, reveals what makes them successful, and gives you actionable strategies based on proven winners. The core value isn't just showing your own data - it's uncovering the secrets of similar successful creators you can learn from. Think of it as a spy tool that reveals the winning strategies of your competition.
 
 ## How The App Is Built
 
@@ -79,13 +79,14 @@ Stores information about individual TikTok videos:
 ### Services (The Workers)
 
 #### TikTok Scraper (`app/services/tiktok_scraper.py`)
-This is like a robot that visits TikTok profiles and collects public information:
-- Uses Selenium (automated browser) to visit TikTok pages
-- Extracts profile data like follower count, bio, etc.
-- Gets information about recent videos
+This is like a robot that visits multiple TikTok profiles and collects competitive intelligence:
+- Uses Selenium (automated browser) to visit many similar creators' pages
+- Extracts profile data like follower count, bio, engagement patterns
+- Gets information about recent videos from successful creators
 - Converts text like "1.2M" into actual numbers (1,200,000)
+- Analyzes patterns across multiple similar creators
 
-**Why we built this:** TikTok doesn't provide an easy way to get this data, so we have to "scrape" it from their website like a human would browse it.
+**Why we built this:** The main value is analyzing successful creators in your niche to extract winning strategies that you can't easily get by manually checking profiles one by one.
 
 #### Google Authentication (`app/services/google_auth.py`)
 Handles logging in with Google accounts:

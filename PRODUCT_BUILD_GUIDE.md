@@ -4,7 +4,7 @@ This document explains the key steps needed to build the TikTok Creator Compass 
 
 ## What We're Building
 
-A web application that helps TikTok creators understand their performance, get insights about their content, and receive personalized recommendations to grow their audience. Think of it as a personal analytics dashboard for TikTok creators.
+A web application that helps TikTok creators discover and analyze successful creators in their niche, understand what makes them successful, and get personalized recommendations based on proven strategies. The core value is not just showing creators their own data, but revealing the secrets of similar successful creators they can learn from. Think of it as a competitive intelligence platform for TikTok creators.
 
 ## Key Steps to Build This Product
 
@@ -19,8 +19,8 @@ A web application that helps TikTok creators understand their performance, get i
 **Files involved:** All model files (`user.py`, `tiktok_profile.py`, `tiktok_video.py`, `analytics.py`)
 
 ### Step 3: Build TikTok Data Scraper
-**What:** Create a system that can visit TikTok profiles and collect public information automatically
-**Why:** TikTok doesn't provide an easy API for creators to get their own data, so we need to collect it ourselves
+**What:** Create a system that can visit multiple TikTok profiles and collect public information from similar creators automatically
+**Why:** The main value is analyzing successful creators in the user's niche to extract winning strategies and best practices
 **Files involved:** `tiktok_scraper.py`
 
 ### Step 4: Create API Endpoints
@@ -56,8 +56,8 @@ Without secure login, we can't safely store personal data or ensure users only s
 ### Database Design Early
 If we don't plan how to store data properly from the start, we'll have problems later when we try to add new features or analyze the information.
 
-### Scraping is the Core Value
-The main thing that makes our app valuable is getting TikTok data that creators can't easily access themselves. This is our unique capability.
+### Scraping Similar Creators is the Core Value
+The main thing that makes our app valuable is analyzing successful creators in the user's niche and extracting their winning strategies. While creators can see their own data, they can't easily analyze dozens of similar successful creators to find patterns and best practices.
 
 ### APIs Enable Everything
 The frontend and backend need to communicate. Well-designed APIs make the app fast and allow us to build mobile apps later.
