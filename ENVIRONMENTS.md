@@ -49,6 +49,11 @@ DATABASE_URL=postgresql://user:password@localhost/tiktok_compass_dev
 SECRET_KEY=dev_secret_key_123
 GOOGLE_CLIENT_ID=your_dev_google_client_id
 GOOGLE_CLIENT_SECRET=your_dev_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
+REDIS_URL=redis://localhost:6379/0
+ENVIRONMENT=development
+DEBUG=true
+FRONTEND_URL=http://localhost:3000
 ```
 
 **Run Development:**
@@ -79,9 +84,14 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_test_google_client_id
 - Environment Variables in Railway:
 ```
 DATABASE_URL=postgresql://test_db_connection
-SECRET_KEY=test_secret_key
+SECRET_KEY=test_secret_key_generate_random_32_chars
 GOOGLE_CLIENT_ID=your_test_google_client_id
 GOOGLE_CLIENT_SECRET=your_test_google_client_secret
+GOOGLE_REDIRECT_URI=https://your-staging-app.netlify.app/auth/callback
+REDIS_URL=redis://redis-staging-url:6379/0
+ENVIRONMENT=staging
+DEBUG=false
+FRONTEND_URL=https://your-staging-app.netlify.app
 ```
 
 ### **Production Environment (Live App)**
@@ -101,9 +111,14 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_prod_google_client_id
 - Environment Variables:
 ```
 DATABASE_URL=postgresql://prod_db_connection
-SECRET_KEY=super_secure_production_key
+SECRET_KEY=super_secure_production_key_64_chars_random
 GOOGLE_CLIENT_ID=your_prod_google_client_id
 GOOGLE_CLIENT_SECRET=your_prod_google_client_secret
+GOOGLE_REDIRECT_URI=https://your-production-app.netlify.app/auth/callback
+REDIS_URL=redis://redis-production-url:6379/0
+ENVIRONMENT=production
+DEBUG=false
+FRONTEND_URL=https://your-production-app.netlify.app
 ```
 
 ## 📁 File Structure for Environments
@@ -180,9 +195,16 @@ git push origin main
 
 **Backend:**
 - `DATABASE_URL`: PostgreSQL database connection
-- `SECRET_KEY`: Encrypts user sessions and tokens
+- `SECRET_KEY`: Encrypts user sessions and tokens (use strong random key in production)
 - `GOOGLE_CLIENT_ID`: Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET`: Google OAuth secret
+- `GOOGLE_REDIRECT_URI`: OAuth callback URL (must match Google Console settings)
+- `REDIS_URL`: Redis connection for caching and sessions
+- `ENVIRONMENT`: Current environment (development/staging/production)
+- `DEBUG`: Enable debug mode (true for dev, false for production)
+- `FRONTEND_URL`: Frontend URL for CORS configuration
+- `TIKTOK_CLIENT_KEY`: Optional TikTok API key
+- `TIKTOK_CLIENT_SECRET`: Optional TikTok API secret
 
 ### **How to Set Them:**
 
@@ -206,11 +228,17 @@ git push origin main
 cd frontend
 cp .env.example .env.local
 # Edit .env.local with your values
+npm install
 
 # Backend  
 cd backend
 cp .env.example .env
 # Edit .env with your values
+pip install -r requirements.txt
+
+# Database setup
+python create_db.py
+alembic upgrade head
 ```
 
 ### **Test Your Setup:**
@@ -225,18 +253,70 @@ python run.py
 # Should connect to your database
 ```
 
-## 🆘 Common Issues
+## 🆘 Common Issues & Solutions
 
 **Problem:** "Environment variable not found"
-**Solution:** Check if `.env` file exists and variable names match exactly
+**Solution:** 
+- Check if `.env` file exists in correct directory
+- Verify variable names match exactly (case-sensitive)
+- Restart development servers after changing .env files
 
 **Problem:** "OAuth redirect URI mismatch"
-**Solution:** Make sure Google OAuth redirect URI matches your environment URL
+**Solution:** 
+- Ensure Google OAuth redirect URI exactly matches your environment URL
+- Check for trailing slashes and http vs https
+- Verify GOOGLE_REDIRECT_URI in backend matches Google Console
 
 **Problem:** "Database connection failed"
-**Solution:** Verify `DATABASE_URL` format and database is running
+**Solution:** 
+- Verify `DATABASE_URL` format: `postgresql://user:password@host:port/database`
+- Ensure PostgreSQL is running locally for development
+- Check database exists and user has permissions
 
 **Problem:** "CORS errors"
-**Solution:** Update backend CORS settings for your frontend domain
+**Solution:** 
+- Update `FRONTEND_URL` in backend .env to match frontend URL
+- Ensure frontend `NEXT_PUBLIC_API_URL` points to correct backend
+- Check CORS middleware configuration in main.py
 
-This setup gives you clean separation between development, testing, and production! 🎉
+**Problem:** "Redis connection failed"
+**Solution:**
+- Install and start Redis locally: `brew install redis && brew services start redis`
+- Verify `REDIS_URL` format in .env file
+- For production, ensure Redis service is provisioned
+
+**Problem:** "Secret key too short"
+**Solution:**
+- Generate secure secret key: `python -c "import secrets; print(secrets.token_urlsafe(32))"`
+- Use different keys for each environment
+- Never use default/example keys in production
+
+## 🚨 Pre-Deployment Checklist
+
+### **Before Deploying to Staging:**
+- [ ] All environment variables set correctly
+- [ ] Database migrations run successfully
+- [ ] Google OAuth credentials configured for staging domain
+- [ ] Redis service provisioned and accessible
+- [ ] CORS settings allow staging frontend domain
+- [ ] Secret keys are secure and unique
+
+### **Before Deploying to Production:**
+- [ ] All staging tests pass
+- [ ] Production database backed up
+- [ ] Production Google OAuth credentials configured
+- [ ] All secret keys are production-grade (64+ characters)
+- [ ] DEBUG=false in production environment
+- [ ] Error monitoring and logging configured
+- [ ] SSL certificates valid
+- [ ] Domain DNS configured correctly
+
+### **Security Best Practices:**
+- Never commit .env files to Git
+- Use different OAuth credentials for each environment
+- Generate unique, strong secret keys for each environment
+- Set DEBUG=false in staging and production
+- Use HTTPS for all production URLs
+- Regularly rotate secret keys and API credentials
+
+This setup gives you clean separation between development, testing, and production with robust security! 🎉
