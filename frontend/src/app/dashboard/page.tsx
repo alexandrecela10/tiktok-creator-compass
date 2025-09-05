@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { analyticsApi, tiktokApi } from '@/lib/api';
-import { AnalyticsOverview, TikTokProfile } from '@/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { 
@@ -20,41 +18,49 @@ import { formatNumber, formatPercentage, formatRelativeTime, getGrowthColor, get
 import toast from 'react-hot-toast';
 
 export default function DashboardPage() {
-  const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
-  const [profile, setProfile] = useState<TikTokProfile | null>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedVideoMetric, setSelectedVideoMetric] = useState('views');
 
   useEffect(() => {
-    loadDashboardData();
+    // Simplified: just load demo data immediately
+    loadDemoData();
   }, []);
 
-  const loadDashboardData = async () => {
-    try {
-      const [analyticsData, profileData] = await Promise.all([
-        analyticsApi.getOverview(),
-        tiktokApi.getProfile()
-      ]);
-      
-      setAnalytics(analyticsData);
-      setProfile(profileData);
-    } catch (error: any) {
-      toast.error('Failed to load dashboard data');
-      console.error('Dashboard error:', error);
-    }
+  const loadDemoData = () => {
+    // Always load demo data without any authentication checks
+    const demoAnalytics = {
+      total_followers: 12500,
+      total_likes: 145000,
+      total_videos: 87,
+      avg_engagement_rate: 4.2,
+      follower_growth_7d: 156
+    };
+    
+    const demoProfile = {
+      id: 1,
+      tiktok_username: 'demo_creator',
+      display_name: 'Demo Creator',
+      bio: 'Fashion & lifestyle content creator 🍑✨',
+      avatar_url: 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑',
+      is_verified: false,
+      last_scraped_at: new Date().toISOString()
+    };
+    
+    setAnalytics(demoAnalytics);
+    setProfile(demoProfile);
     setLoading(false);
   };
 
+
   const handleRefresh = async () => {
     setRefreshing(true);
-    try {
-      await tiktokApi.refreshProfile();
-      await loadDashboardData();
-      toast.success('Profile data refreshed successfully');
-    } catch (error) {
-      toast.error('Failed to refresh profile data');
-    }
+    // Simple demo refresh without any API calls
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    loadDemoData();
+    toast.success('🍑 Demo data refreshed!');
     setRefreshing(false);
   };
 
@@ -67,15 +73,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
-            ))}
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-peach flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-peach-600"></div>
       </div>
     );
   }

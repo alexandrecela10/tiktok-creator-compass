@@ -30,17 +30,37 @@ export default function OnboardingPage() {
       return;
     }
 
-    try {
-      const userData = await usersApi.getCurrentUser();
-      setUser(userData);
-      
-      // If already onboarded, redirect to dashboard
-      if (userData.tiktok_username) {
+    if (token === 'demo_token_12345') {
+      // Demo mode - check if already completed onboarding
+      const onboardingComplete = localStorage.getItem('demo_onboarding_complete');
+      if (onboardingComplete === 'true') {
         router.push('/dashboard');
+        return;
       }
-    } catch (error) {
-      toast.error('Authentication failed');
-      router.push('/');
+      
+      // Set demo user for onboarding
+      const demoUser = {
+        id: 1,
+        email: 'demo@example.com',
+        name: 'Demo User',
+        tiktok_username: undefined,
+        weekly_updates_enabled: true,
+        is_active: true
+      };
+      setUser(demoUser);
+    } else {
+      // Real authentication mode
+      try {
+        const userData = await usersApi.getCurrentUser();
+        setUser(userData);
+        
+        if (userData.tiktok_username) {
+          router.push('/dashboard');
+        }
+      } catch (error) {
+        toast.error('Authentication failed');
+        router.push('/');
+      }
     }
     setLoading(false);
   };
@@ -50,16 +70,32 @@ export default function OnboardingPage() {
     setSubmitting(true);
 
     try {
-      // Complete onboarding
-      const { user: updatedUser } = await usersApi.completeOnboarding(formData);
+      const token = Cookies.get('access_token');
       
-      // Scrape TikTok profile
-      await tiktokApi.scrapeProfile(formData.tiktok_username);
-      
-      toast.success('Welcome to TikTok Creator Compass!');
-      router.push('/dashboard');
+      if (token === 'demo_token_12345') {
+        // Demo mode - simulate API call
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Mark onboarding as complete
+        localStorage.setItem('demo_onboarding_complete', 'true');
+        localStorage.setItem('demo_user_data', JSON.stringify({
+          tiktok_username: formData.tiktok_username,
+          offer_description: formData.offer_description,
+          target_audience: formData.target_audience
+        }));
+        
+        toast.success('🍑 Profile setup complete! Welcome to your dashboard!');
+        router.push('/dashboard');
+      } else {
+        // Real API call for production
+        const { user: updatedUser } = await usersApi.completeOnboarding(formData);
+        await tiktokApi.scrapeProfile(formData.tiktok_username);
+        
+        toast.success('Welcome to TikTok Creator Compass!');
+        router.push('/dashboard');
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Failed to complete onboarding');
+      toast.error('Failed to complete onboarding');
     }
     setSubmitting(false);
   };
@@ -73,20 +109,20 @@ export default function OnboardingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gradient-peach flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-peach-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-warm">
+    <div className="min-h-screen bg-gradient-peach">
       <div className="container mx-auto px-6 py-12">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
             <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <TrendingUp className="w-8 h-8 text-white" />
+              <span className="text-3xl">🍑</span>
             </div>
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to Creator Compass!</h1>
             <p className="text-xl text-gray-600">

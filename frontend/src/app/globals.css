@@ -5,16 +5,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 79, 26, 16;
+  --background-start-rgb: 254, 249, 245;
+  --background-end-rgb: 254, 242, 232;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --foreground-rgb: 79, 26, 16;
+    --background-start-rgb: 254, 249, 245;
+    --background-end-rgb: 254, 242, 232;
   }
 }
 
@@ -29,23 +29,9 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
-/* Custom scrollbar */
+/* Custom peach scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
 }
 
 /* Smooth animations */
@@ -71,15 +57,32 @@ body {
   @apply scale-105 shadow-xl;
 }
 
-/* Gradient backgrounds */
-.gradient-warm {
-  background: linear-gradient(135deg, #fef7f0 0%, #feeee0 100%);
+/* Peach Gradient backgrounds */
+.bg-gradient-warm {
+  background: linear-gradient(135deg, #fef9f5 0%, #fef2e8 50%, #fde2d0 100%);
 }
 
-.gradient-primary {
-  background: linear-gradient(135deg, #f59533 0%, #e45c06 100%);
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #f8a87d 0%, #f48454 50%, #e6653a 100%);
 }
 
-.gradient-success {
+.bg-gradient-peach {
+  background: linear-gradient(135deg, #fef9f5 0%, #fef2e8 50%, #fde2d0 100%);
+}
+
+.bg-gradient-success {
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+/* Peach theme scrollbar */
+::-webkit-scrollbar-track {
+  background: #fef2e8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #f8a87d;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #f48454;
 }
