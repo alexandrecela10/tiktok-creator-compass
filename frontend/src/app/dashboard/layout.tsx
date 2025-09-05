@@ -1,9 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { usersApi } from '@/lib/api';
-import { User } from '@/types';
 import { 
   TrendingUp, 
   BarChart3, 
@@ -13,8 +10,6 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import Cookies from 'js-cookie';
-import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -31,50 +26,18 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>({
+    name: 'Demo Creator',
+    avatar_url: 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑'
+  });
+  const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const token = Cookies.get('access_token');
-    if (!token) {
-      router.push('/');
-      return;
-    }
-
-    try {
-      const userData = await usersApi.getCurrentUser();
-      setUser(userData);
-      
-      if (!userData.tiktok_username) {
-        router.push('/onboarding');
-      }
-    } catch (error) {
-      toast.error('Authentication failed');
-      router.push('/');
-    }
-    setLoading(false);
-  };
-
   const handleLogout = () => {
-    Cookies.remove('access_token');
-    toast.success('Logged out successfully');
-    router.push('/');
+    window.location.href = '/';
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
