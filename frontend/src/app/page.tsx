@@ -50,16 +50,20 @@ export default function HomePage() {
   };
 
   const handleGoogleLogin = async () => {
-    // Set demo token and clear any previous onboarding state
-    Cookies.set('access_token', 'demo_token_12345', { expires: 7 });
-    localStorage.removeItem('demo_onboarding_complete');
-    
-    toast.success('🍑 Welcome to TikTok Creator Compass!');
-    
-    // Redirect to onboarding
-    setTimeout(() => {
-      router.push('/onboarding');
-    }, 1000);
+    try {
+      setLoading(true);
+      
+      // Get Google OAuth URL from backend
+      const { auth_url } = await authApi.getGoogleAuthUrl();
+      
+      // Redirect to Google OAuth
+      window.location.href = auth_url;
+      
+    } catch (error) {
+      console.error('Google login failed:', error);
+      toast.error('🍑 Login failed. Please try again.');
+      setLoading(false);
+    }
   };
 
   if (loading) {

@@ -2,8 +2,8 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { User, TikTokProfile, TikTokVideo, AnalyticsOverview, CreatorRecommendation, GrowthMetrics } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-const IS_DEMO_MODE = typeof window !== 'undefined' && (window.location.hostname.includes('netlify.app') || window.location.hostname.includes('vercel.app'));
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const IS_DEMO_MODE = false; // Disabled demo mode - using real backend
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,

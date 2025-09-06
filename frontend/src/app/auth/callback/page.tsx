@@ -1,39 +1,69 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
+import { authApi } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 export default function AuthCallback() {
   const router = useRouter();
+  const [processing, setProcessing] = useState(true);
 
   useEffect(() => {
-    // For demo mode, simulate successful authentication
-    if (typeof window !== 'undefined') {
+    handleCallback();
+  }, []);
+
+  const handleCallback = async () => {
+    try {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const error = urlParams.get('error');
 
       if (error) {
+        toast.error('🍑 Authentication cancelled');
         router.push('/');
         return;
       }
 
-      if (code || window.location.hostname.includes('netlify.app') || window.location.hostname.includes('vercel.app')) {
-        // Set demo token for deployed environments
-        Cookies.set('access_token', 'demo_token_12345', { expires: 7 });
-        router.push('/dashboard');
-      } else {
+      if (!code) {
+        toast.error('🍑 No authorization code received');
         router.push('/');
+        return;
       }
+
+      // Exchange code for token with backend
+      const { access_token, user } = await authApi.googleCallback(code);
+      
+      // Store token
+      Cookies.set('access_token', access_token, { expires: 7 });
+      
+      // Redirect based on onboarding status
+      if (!user.tiktok_username) {
+        toast.success('🍑 Welcome! Let\'s set up your profile.');
+        router.push('/onboarding');
+      } else {
+        toast.success(`🍑 Welcome back, ${user.name}!`);
+        router.push('/dashboard');
+      }
+      
+    } catch (error) {
+      console.error('Auth callback error:', error);
+      toast.error('🍑 Authentication failed. Please try again.');
+      router.push('/');
+    } finally {
+      setProcessing(false);
     }
-  }, [router]);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-warm flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-peach flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Completing authentication...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-peach-600 mx-auto mb-4"></div>
+        <p className="text-peach-700">🍑 Completing authentication...</p>
+        {!processing && (
+          <p className="text-peach-600 mt-2 text-sm">Redirecting...</p>
+        )}
       </div>
     </div>
   );

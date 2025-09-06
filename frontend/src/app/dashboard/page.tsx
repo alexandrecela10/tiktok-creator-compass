@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { analyticsApi, usersApi, authApi } from '@/lib/api';
+import Cookies from 'js-cookie';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { 
@@ -25,9 +28,55 @@ export default function DashboardPage() {
   const [selectedVideoMetric, setSelectedVideoMetric] = useState('views');
 
   useEffect(() => {
-    // Simplified: just load demo data immediately
-    loadDemoData();
+    checkAuthAndLoadData();
   }, []);
+
+  const checkAuthAndLoadData = async () => {
+    try {
+      const token = Cookies.get('access_token');
+      if (!token) {
+        window.location.href = '/';
+        return;
+      }
+
+      // Verify token and get user info
+      const user = await authApi.verifyToken();
+      
+      // If user hasn't completed onboarding, redirect
+      if (!user.tiktok_username) {
+        window.location.href = '/onboarding';
+        return;
+      }
+
+      // Load real analytics data
+      await loadRealData();
+      
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      Cookies.remove('access_token');
+      window.location.href = '/';
+    }
+  };
+
+  const loadRealData = async () => {
+    try {
+      // Load analytics from backend
+      const analyticsData = await analyticsApi.getOverview();
+      const profileData = await usersApi.getCurrentUser();
+      
+      setAnalytics(analyticsData);
+      setProfile({
+        ...profileData,
+        avatar_url: profileData.avatar_url || 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑'
+      });
+      setLoading(false);
+      
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      // Fallback to demo data if API fails
+      loadDemoData();
+    }
+  };
 
   const loadDemoData = () => {
     // Always load demo data without any authentication checks

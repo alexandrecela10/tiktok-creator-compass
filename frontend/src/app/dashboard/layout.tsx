@@ -13,6 +13,9 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { authApi } from '@/lib/api';
+import Cookies from 'js-cookie';
+import toast from 'react-hot-toast';
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: BarChart3 },
@@ -26,18 +29,49 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<any>({
-    name: 'Demo Creator',
-    avatar_url: 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑'
-  });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const token = Cookies.get('access_token');
+      if (!token) {
+        window.location.href = '/';
+        return;
+      }
+
+      const userData = await authApi.verifyToken();
+      setUser({
+        ...userData,
+        avatar_url: userData.avatar_url || 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑'
+      });
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to load user:', error);
+      Cookies.remove('access_token');
+      window.location.href = '/';
+    }
+  };
+
   const handleLogout = () => {
+    Cookies.remove('access_token');
+    toast.success('🍑 Logged out successfully');
     window.location.href = '/';
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-peach flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-peach-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

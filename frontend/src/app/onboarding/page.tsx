@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { usersApi, tiktokApi } from '@/lib/api';
+import { usersApi, tiktokApi, authApi } from '@/lib/api';
 import { User } from '@/types';
 import { TrendingUp, User as UserIcon, Target, ArrowRight, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -13,56 +13,39 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    tiktok_username: '',
-    offer_description: '',
-    target_audience: '',
+    tiktokUsername: '',
+    offerDescription: '',
+    targetAudience: ''
   });
   const router = useRouter();
 
   useEffect(() => {
-    checkAuth();
+    checkUserStatus();
   }, []);
 
-  const checkAuth = async () => {
-    const token = Cookies.get('access_token');
-    if (!token) {
-      router.push('/');
-      return;
-    }
+  const checkUserStatus = async () => {
+    try {
+      const token = Cookies.get('access_token');
+      if (!token) {
+        router.push('/');
+        return;
+      }
 
-    if (token === 'demo_token_12345') {
-      // Demo mode - check if already completed onboarding
-      const onboardingComplete = localStorage.getItem('demo_onboarding_complete');
-      if (onboardingComplete === 'true') {
+      // Verify token and get user info
+      const user = await authApi.verifyToken();
+      
+      // If user already has TikTok username, redirect to dashboard
+      if (user.tiktok_username) {
         router.push('/dashboard');
         return;
       }
       
-      // Set demo user for onboarding
-      const demoUser = {
-        id: 1,
-        email: 'demo@example.com',
-        name: 'Demo User',
-        tiktok_username: undefined,
-        weekly_updates_enabled: true,
-        is_active: true
-      };
-      setUser(demoUser);
-    } else {
-      // Real authentication mode
-      try {
-        const userData = await usersApi.getCurrentUser();
-        setUser(userData);
-        
-        if (userData.tiktok_username) {
-          router.push('/dashboard');
-        }
-      } catch (error) {
-        toast.error('Authentication failed');
-        router.push('/');
-      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      Cookies.remove('access_token');
+      router.push('/');
     }
-    setLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,34 +53,25 @@ export default function OnboardingPage() {
     setSubmitting(true);
 
     try {
-      const token = Cookies.get('access_token');
+      // Call real backend API to complete onboarding
+      const response = await usersApi.completeOnboarding({
+        tiktok_username: formData.tiktokUsername,
+        offer_description: formData.offerDescription,
+        target_audience: formData.targetAudience
+      });
       
-      if (token === 'demo_token_12345') {
-        // Demo mode - simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Mark onboarding as complete
-        localStorage.setItem('demo_onboarding_complete', 'true');
-        localStorage.setItem('demo_user_data', JSON.stringify({
-          tiktok_username: formData.tiktok_username,
-          offer_description: formData.offer_description,
-          target_audience: formData.target_audience
-        }));
-        
-        toast.success('🍑 Profile setup complete! Welcome to your dashboard!');
+      toast.success('🍑 Profile setup complete! Welcome to your dashboard.');
+      
+      setTimeout(() => {
         router.push('/dashboard');
-      } else {
-        // Real API call for production
-        const { user: updatedUser } = await usersApi.completeOnboarding(formData);
-        await tiktokApi.scrapeProfile(formData.tiktok_username);
-        
-        toast.success('Welcome to TikTok Creator Compass!');
-        router.push('/dashboard');
-      }
-    } catch (error: any) {
-      toast.error('Failed to complete onboarding');
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Onboarding failed:', error);
+      toast.error('🍑 Setup failed. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -143,8 +117,8 @@ export default function OnboardingPage() {
                   <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">@</span>
                   <input
                     type="text"
-                    name="tiktok_username"
-                    value={formData.tiktok_username}
+                    name="tiktokUsername"
+                    value={formData.tiktokUsername}
                     onChange={handleInputChange}
                     placeholder="your_username"
                     className="w-full pl-8 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
@@ -163,8 +137,8 @@ export default function OnboardingPage() {
                   What is your offer?
                 </label>
                 <textarea
-                  name="offer_description"
-                  value={formData.offer_description}
+                  name="offerDescription"
+                  value={formData.offerDescription}
                   onChange={handleInputChange}
                   placeholder="Describe what you offer (e.g., fitness coaching, cooking tutorials, comedy content, etc.)"
                   rows={4}
@@ -180,8 +154,8 @@ export default function OnboardingPage() {
                   Who is your target audience?
                 </label>
                 <textarea
-                  name="target_audience"
-                  value={formData.target_audience}
+                  name="targetAudience"
+                  value={formData.targetAudience}
                   onChange={handleInputChange}
                   placeholder="Describe your ideal audience (e.g., fitness enthusiasts aged 18-35, aspiring entrepreneurs, etc.)"
                   rows={4}
