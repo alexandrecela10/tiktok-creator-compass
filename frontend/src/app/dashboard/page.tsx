@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { analyticsApi, usersApi, authApi } from '@/lib/api';
+import { analyticsApi, usersApi, authApi, tiktokApi } from '@/lib/api';
 import Cookies from 'js-cookie';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -23,8 +23,10 @@ import toast from 'react-hot-toast';
 export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [tiktokProfile, setTiktokProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [scraping, setScraping] = useState(false);
   const [selectedVideoMetric, setSelectedVideoMetric] = useState('views');
 
   useEffect(() => {
@@ -63,6 +65,15 @@ export default function DashboardPage() {
       // Load analytics from backend
       const analyticsData = await analyticsApi.getOverview();
       const profileData = await usersApi.getCurrentUser();
+      
+      // Try to load TikTok profile data
+      let tiktokData = null;
+      try {
+        tiktokData = await tiktokApi.getProfile();
+        setTiktokProfile(tiktokData);
+      } catch (error) {
+        console.log('No TikTok profile data found');
+      }
       
       setAnalytics(analyticsData);
       setProfile({
@@ -106,11 +117,43 @@ export default function DashboardPage() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Simple demo refresh without any API calls
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    loadDemoData();
-    toast.success('🍑 Demo data refreshed!');
+    try {
+      await loadRealData();
+      toast.success('🍑 Data refreshed successfully!');
+    } catch (error) {
+      console.error('Refresh failed:', error);
+      toast.error('🍑 Failed to refresh data');
+    }
     setRefreshing(false);
+  };
+
+  const handleScrapeProfile = async () => {
+    if (!profile?.tiktok_username) {
+      toast.error('🍑 No TikTok username found');
+      return;
+    }
+
+    setScraping(true);
+    try {
+      const result = await tiktokApi.scrapeProfile(profile.tiktok_username);
+      toast.success('🍑 Profile scraping started! This may take a few moments.');
+      
+      // Refresh data after a short delay to get updated profile
+      setTimeout(async () => {
+        try {
+          const updatedProfile = await tiktokApi.getProfile();
+          setTiktokProfile(updatedProfile);
+          toast.success('🍑 Profile data updated!');
+        } catch (error) {
+          console.log('Profile not ready yet');
+        }
+      }, 5000);
+      
+    } catch (error) {
+      console.error('Scraping failed:', error);
+      toast.error('🍑 Failed to scrape profile. Please try again.');
+    }
+    setScraping(false);
   };
 
   const getGrowthIndicator = (growth: number | undefined) => {
@@ -157,8 +200,8 @@ export default function DashboardPage() {
           <CardContent className="flex items-center space-x-6">
             <div className="flex-shrink-0">
               <img
-                src={profile.avatar_url || '/default-avatar.png'}
-                alt={profile.display_name || profile.tiktok_username}
+                src={(tiktokProfile?.avatar_url) || profile.avatar_url || '/default-avatar.png'}
+                alt={(tiktokProfile?.display_name) || profile.display_name || profile.tiktok_username}
                 className="w-16 h-16 rounded-full"
               />
             </div>
@@ -171,21 +214,33 @@ export default function DashboardPage() {
                 >
                   @{profile.tiktok_username}
                 </a>
-                {profile.is_verified && (
+                {(tiktokProfile?.is_verified || profile.is_verified) && (
                   <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                     <span className="text-white text-xs">✓</span>
                   </div>
                 )}
               </div>
-              {profile.display_name && (
-                <p className="text-lg text-gray-600">{profile.display_name}</p>
+              {(tiktokProfile?.display_name || profile.display_name) && (
+                <p className="text-lg text-gray-600">{tiktokProfile?.display_name || profile.display_name}</p>
               )}
-              {profile.bio && (
-                <p className="text-gray-500 mt-1">{profile.bio}</p>
+              {(tiktokProfile?.bio || profile.bio) && (
+                <p className="text-gray-500 mt-1">{tiktokProfile?.bio || profile.bio}</p>
               )}
-              <p className="text-sm text-gray-400 mt-2">
-                Last updated: {formatRelativeTime(profile.last_scraped_at)}
-              </p>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-sm text-gray-400">
+                  {tiktokProfile ? `TikTok data: ${formatRelativeTime(tiktokProfile.last_scraped_at)}` : 'No TikTok data scraped yet'}
+                </p>
+                <Button
+                  onClick={handleScrapeProfile}
+                  loading={scraping}
+                  variant="outline"
+                  size="sm"
+                  className="ml-4"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {tiktokProfile ? 'Update' : 'Scrape'} TikTok Data
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -204,7 +259,7 @@ export default function DashboardPage() {
               <p className="text-sm font-medium text-gray-500">Followers</p>
               <div className="flex items-center">
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatNumber(analytics?.total_followers)}
+                  {formatNumber(tiktokProfile?.follower_count || analytics?.total_followers)}
                 </p>
                 {analytics?.follower_growth_7d !== undefined && (
                   <div className={`ml-2 flex items-center ${getGrowthColor(analytics.follower_growth_7d)}`}>
@@ -214,7 +269,7 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-              <p className="text-xs text-gray-400">7-day change</p>
+              <p className="text-xs text-gray-400">{tiktokProfile ? 'From TikTok' : '7-day change'}</p>
             </div>
           </CardContent>
         </Card>
@@ -229,9 +284,9 @@ export default function DashboardPage() {
             <div className="ml-4 flex-1">
               <p className="text-sm font-medium text-gray-500">Total Likes</p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatNumber(analytics?.total_likes)}
+                {formatNumber(tiktokProfile?.likes_count || analytics?.total_likes)}
               </p>
-              <p className="text-xs text-gray-400">All time</p>
+              <p className="text-xs text-gray-400">{tiktokProfile ? 'From TikTok' : 'All time'}</p>
             </div>
           </CardContent>
         </Card>
@@ -246,9 +301,9 @@ export default function DashboardPage() {
             <div className="ml-4 flex-1">
               <p className="text-sm font-medium text-gray-500">Videos</p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatNumber(analytics?.total_videos)}
+                {formatNumber(tiktokProfile?.video_count || analytics?.total_videos)}
               </p>
-              <p className="text-xs text-gray-400">Published</p>
+              <p className="text-xs text-gray-400">{tiktokProfile ? 'From TikTok' : 'Published'}</p>
             </div>
           </CardContent>
         </Card>
