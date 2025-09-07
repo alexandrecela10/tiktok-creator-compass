@@ -11,7 +11,7 @@ router = APIRouter()
 security = HTTPBearer()
 
 class GoogleAuthRequest(BaseModel):
-    token: str
+    code: str
 
 class GoogleAuthResponse(BaseModel):
     access_token: str
@@ -37,7 +37,7 @@ async def google_auth_callback(
     auth_service = GoogleAuthService()
     
     # Exchange authorization code for token and get user info
-    user_info = await auth_service.exchange_code_for_token(auth_request.token)
+    user_info = await auth_service.exchange_code_for_token(auth_request.code)
     if not user_info:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

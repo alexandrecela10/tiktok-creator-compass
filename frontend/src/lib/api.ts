@@ -31,7 +31,7 @@ export const authApi = {
     return response.data;
   },
 
-  googleCallback: async (token: string): Promise<{ access_token: string; user: User }> => {
+  googleCallback: async (code: string): Promise<{ access_token: string; user: User }> => {
     if (IS_DEMO_MODE) {
       return {
         access_token: 'demo_token_12345',
@@ -45,7 +45,7 @@ export const authApi = {
         }
       };
     }
-    const response = await api.post('/auth/google/callback', { token });
+    const response = await api.post('/auth/google/callback', { code });
     return response.data;
   },
 
@@ -113,7 +113,11 @@ export const tiktokApi = {
 // Analytics API
 export const analyticsApi = {
   getOverview: async (): Promise<AnalyticsOverview> => {
-    if (IS_DEMO_MODE) {
+    try {
+      const response = await api.get('/analytics/overview');
+      return response.data;
+    } catch (error) {
+      // Fallback to demo data if backend analytics not available
       return {
         total_followers: 125000,
         total_likes: 2500000,
@@ -122,8 +126,6 @@ export const analyticsApi = {
         follower_growth_7d: 12.5
       };
     }
-    const response = await api.get('/analytics/overview');
-    return response.data;
   },
 
   getVideoPerformance: async (limit: number = 20, sortBy: string = 'view_count'): Promise<TikTokVideo[]> => {
