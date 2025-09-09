@@ -8,12 +8,16 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend requirements first for better caching
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy everything first, then move backend files
+COPY . /tmp/source/
 
-# Copy backend application code
-COPY backend/ .
+# Copy backend requirements and install dependencies
+RUN cp /tmp/source/backend/requirements.txt . && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy backend application code to working directory
+RUN cp -r /tmp/source/backend/* . && \
+    rm -rf /tmp/source
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app

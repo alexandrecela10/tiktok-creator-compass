@@ -1,7 +1,3 @@
-# Frontend files (not needed for backend build)
-frontend/
-.netlify/
-
 # Documentation
 *.md
 DEPLOYMENT*
@@ -16,6 +12,10 @@ PRODUCT_BUILD*
 RAILWAY_DEPLOYMENT*
 SETUP*
 issue_log.md
+
+# Frontend files (not needed for backend build)
+frontend/
+.netlify/
 
 # Git
 .git/
