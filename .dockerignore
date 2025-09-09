@@ -1,0 +1,68 @@
+# Frontend files (not needed for backend build)
+frontend/
+.netlify/
+
+# Documentation
+*.md
+DEPLOYMENT*
+ARCHITECTURE*
+ANALYTICS*
+AUTHENTICATION*
+CODE_DOCUMENTATION*
+DATABASE_VERIFICATION*
+ENVIRONMENTS*
+GOOGLE_OAUTH*
+PRODUCT_BUILD*
+RAILWAY_DEPLOYMENT*
+SETUP*
+issue_log.md
+
+# Git
+.git/
+.gitignore
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment files
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.test
+backend/.env.production
+backend/venv/
+backend/env/
+
+# Database
+backend/*.db
+backend/*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
