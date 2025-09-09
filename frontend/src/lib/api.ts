@@ -112,45 +112,67 @@ export const tiktokApi = {
 
 // Analytics API
 export const analyticsApi = {
-  getOverview: async (): Promise<AnalyticsOverview> => {
+  getAnalytics: async () => {
+    const response = await api.get('/analytics/overview');
+    return response.data;
+  },
+
+  calculateAnalytics: async () => {
+    const response = await api.post('/analytics/calculate');
+    return response.data;
+  },
+
+  getGrowthMetrics: async (days: number = 30) => {
     try {
-      const response = await api.get('/analytics/overview');
+      const response = await api.get(`/analytics/growth?days=${days}`);
       return response.data;
     } catch (error) {
-      // Fallback to demo data if backend analytics not available
+      console.warn('Growth metrics not available, using demo data:', error);
       return {
-        total_followers: 125000,
-        total_likes: 2500000,
-        total_videos: 89,
-        avg_engagement_rate: 4.2,
-        follower_growth_7d: 12.5
+        timeline: [
+          { date: '2024-01-01', followers: 120000, likes: 2400000 },
+          { date: '2024-01-15', followers: 123500, likes: 2450000 },
+          { date: '2024-02-01', followers: 125000, likes: 2500000 }
+        ]
       };
     }
   },
 
-  getVideoPerformance: async (limit: number = 20, sortBy: string = 'view_count'): Promise<TikTokVideo[]> => {
-    const response = await api.get(`/analytics/videos/performance?limit=${limit}&sort_by=${sortBy}`);
-    return response.data;
+  getInsights: async () => {
+    try {
+      const response = await api.get('/analytics/insights');
+      return response.data;
+    } catch (error) {
+      console.warn('Insights not available, using demo data:', error);
+      return {
+        recommendations: [
+          'Post consistently during peak hours (7-9 PM)',
+          'Use trending hashtags in your niche',
+          'Engage with your audience in comments'
+        ]
+      };
+    }
   },
 
-  getGrowthMetrics: async (days: number = 30): Promise<GrowthMetrics[]> => {
-    const response = await api.get(`/analytics/growth?days=${days}`);
-    return response.data;
-  },
-
-  getInsights: async (): Promise<{
-    insights: Array<{ type: string; title: string; description: string }>;
-    recommendations: Array<{ title: string; description: string }>;
-    metrics: {
-      avg_views: number;
-      avg_likes: number;
-      avg_engagement_rate: number;
-      total_videos_analyzed: number;
-    };
-  }> => {
-    const response = await api.get('/analytics/insights');
-    return response.data;
-  },
+  getVideoPerformance: async () => {
+    try {
+      const response = await api.get('/analytics/video-performance');
+      return response.data;
+    } catch (error) {
+      console.warn('Video performance not available, using demo data:', error);
+      return {
+        topVideos: [
+          {
+            id: 'demo-1',
+            title: 'My viral dance trend! 💃✨',
+            views: 850000,
+            likes: 45000,
+            engagement_rate: 5.3
+          }
+        ]
+      };
+    }
+  }
 };
 
 // Recommendations API
@@ -171,6 +193,31 @@ export const recommendationsApi = {
 
   refresh: async (): Promise<{ message: string; count: number }> => {
     const response = await api.post('/recommendations/refresh');
+    return response.data;
+  },
+};
+
+// Best Practices API
+export const bestPracticesApi = {
+  analyze: async (): Promise<any> => {
+    const response = await api.post('/best-practices/analyze');
+    return response.data;
+  },
+
+  getRecommendations: async (): Promise<any> => {
+    const response = await api.get('/best-practices/recommendations');
+    return response.data;
+  },
+};
+
+export const engagedLeadsApi = {
+  analyze: async (limit: number = 20): Promise<any> => {
+    const response = await api.get(`/engaged-leads/analyze?limit=${limit}`);
+    return response.data;
+  },
+
+  getContactSuggestions: async (username: string): Promise<any> => {
+    const response = await api.get(`/engaged-leads/contact-suggestions/${username}`);
     return response.data;
   },
 };

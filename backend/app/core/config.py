@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     
     # CORS
     FRONTEND_URL: str = "http://localhost:3000"
+    ALLOWED_HOSTS: list = ["*"]
     
     class Config:
         env_file = ".env"

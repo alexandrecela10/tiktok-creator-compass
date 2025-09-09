@@ -9,6 +9,7 @@ from app.models.user import User
 from app.models.tiktok_profile import TikTokProfile
 from app.models.tiktok_video import TikTokVideo
 from app.models.analytics import ProfileAnalytics
+from app.services.analytics_engine import AnalyticsEngine
 from app.api.v1.endpoints.users import get_current_user
 
 router = APIRouter()
@@ -45,64 +46,44 @@ async def get_analytics_overview(
     db: Session = Depends(get_db)
 ):
     """Get analytics overview for the user's TikTok profile"""
+    # Use the analytics engine for comprehensive calculations
+    analytics_engine = AnalyticsEngine(db)
+    analytics_data = analytics_engine.calculate_profile_analytics(current_user.id)
+    
+    if not analytics_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="TikTok profile not found or no data available"
+        )
+    
+    # Get top performing video
     profile = db.query(TikTokProfile).filter(
         TikTokProfile.user_id == current_user.id
     ).first()
     
-    if not profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="TikTok profile not found"
-        )
-    
-    # Get recent analytics data
-    recent_analytics = db.query(ProfileAnalytics).filter(
-        ProfileAnalytics.profile_id == profile.id
-    ).order_by(desc(ProfileAnalytics.date)).limit(30).all()
-    
-    # Calculate growth metrics
-    follower_growth_7d = None
-    follower_growth_30d = None
-    
-    if len(recent_analytics) >= 7:
-        current_followers = profile.follower_count or 0
-        followers_7d_ago = recent_analytics[6].profile.follower_count or 0
-        follower_growth_7d = current_followers - followers_7d_ago
-    
-    if len(recent_analytics) >= 30:
-        current_followers = profile.follower_count or 0
-        followers_30d_ago = recent_analytics[29].profile.follower_count or 0
-        follower_growth_30d = current_followers - followers_30d_ago
-    
-    # Get top performing video
-    top_video = db.query(TikTokVideo).filter(
-        TikTokVideo.profile_id == profile.id
-    ).order_by(desc(TikTokVideo.view_count)).first()
-    
     top_performing_video = None
-    if top_video:
-        top_performing_video = {
-            "video_id": top_video.video_id,
-            "video_url": top_video.video_url,
-            "description": top_video.description,
-            "view_count": top_video.view_count,
-            "like_count": top_video.like_count,
-            "engagement_rate": top_video.engagement_rate
-        }
-    
-    # Calculate average engagement rate
-    avg_engagement = db.query(func.avg(TikTokVideo.engagement_rate)).filter(
-        TikTokVideo.profile_id == profile.id,
-        TikTokVideo.engagement_rate.isnot(None)
-    ).scalar()
+    if profile:
+        top_video = db.query(TikTokVideo).filter(
+            TikTokVideo.profile_id == profile.id
+        ).order_by(desc(TikTokVideo.view_count)).first()
+        
+        if top_video:
+            top_performing_video = {
+                "video_id": top_video.video_id,
+                "video_url": top_video.video_url,
+                "description": top_video.description,
+                "view_count": top_video.view_count,
+                "like_count": top_video.like_count,
+                "engagement_rate": top_video.engagement_rate
+            }
     
     return AnalyticsOverview(
-        total_followers=profile.follower_count,
-        total_videos=profile.video_count,
-        total_likes=profile.likes_count,
-        avg_engagement_rate=float(avg_engagement) if avg_engagement else None,
-        follower_growth_7d=follower_growth_7d,
-        follower_growth_30d=follower_growth_30d,
+        total_followers=analytics_data.get('total_followers'),
+        total_videos=analytics_data.get('total_videos'),
+        total_likes=analytics_data.get('total_likes'),
+        avg_engagement_rate=analytics_data.get('avg_engagement_rate'),
+        follower_growth_7d=analytics_data.get('follower_growth_7d'),
+        follower_growth_30d=analytics_data.get('follower_growth_30d'),
         top_performing_video=top_performing_video
     )
 
@@ -156,33 +137,18 @@ async def get_growth_metrics(
     db: Session = Depends(get_db)
 ):
     """Get growth metrics over time"""
-    profile = db.query(TikTokProfile).filter(
-        TikTokProfile.user_id == current_user.id
-    ).first()
-    
-    if not profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="TikTok profile not found"
-        )
-    
-    # Get analytics data for the specified period
-    start_date = datetime.utcnow().date() - timedelta(days=days)
-    
-    analytics_data = db.query(ProfileAnalytics).filter(
-        ProfileAnalytics.profile_id == profile.id,
-        ProfileAnalytics.date >= start_date
-    ).order_by(ProfileAnalytics.date).all()
+    analytics_engine = AnalyticsEngine(db)
+    timeline_data = analytics_engine.get_growth_timeline(current_user.id, days)
     
     return [
         GrowthMetrics(
-            date=analytics.date.isoformat(),
-            followers=analytics.profile.follower_count,
-            following=analytics.profile.following_count,
-            videos=analytics.profile.video_count,
-            avg_views=analytics.avg_views,
-            avg_engagement=analytics.avg_engagement_rate
-        ) for analytics in analytics_data
+            date=item['date'],
+            followers=item['followers'],
+            following=None,  # Not tracked in timeline
+            videos=item['videos'],
+            avg_views=None,  # Could be added later
+            avg_engagement=item['engagement_rate']
+        ) for item in timeline_data
     ]
 
 @router.get("/insights")
@@ -191,80 +157,67 @@ async def get_performance_insights(
     db: Session = Depends(get_db)
 ):
     """Get AI-powered performance insights and recommendations"""
-    profile = db.query(TikTokProfile).filter(
-        TikTokProfile.user_id == current_user.id
-    ).first()
+    analytics_engine = AnalyticsEngine(db)
+    insights_data = analytics_engine.get_content_insights(current_user.id)
     
-    if not profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="TikTok profile not found"
-        )
+    if not insights_data or 'message' in insights_data:
+        return {
+            "insights": [],
+            "recommendations": [],
+            "metrics": {
+                "avg_views": 0,
+                "avg_likes": 0,
+                "avg_engagement_rate": 0,
+                "total_videos_analyzed": 0
+            }
+        }
     
-    # Get recent videos for analysis
-    recent_videos = db.query(TikTokVideo).filter(
-        TikTokVideo.profile_id == profile.id
-    ).order_by(desc(TikTokVideo.posted_at)).limit(10).all()
-    
-    if not recent_videos:
-        return {"insights": [], "recommendations": []}
-    
-    # Calculate performance metrics
-    avg_views = sum(v.view_count or 0 for v in recent_videos) / len(recent_videos)
-    avg_likes = sum(v.like_count or 0 for v in recent_videos) / len(recent_videos)
-    avg_engagement = avg_likes / avg_views if avg_views > 0 else 0
-    
-    # Generate insights
+    # Convert insights to expected format
     insights = []
     recommendations = []
     
-    # Engagement rate insight
-    if avg_engagement > 0.05:
+    # Add performance insights as formatted insights
+    for insight in insights_data.get('performance_insights', []):
         insights.append({
-            "type": "positive",
-            "title": "Strong Engagement Rate",
-            "description": f"Your average engagement rate of {avg_engagement:.2%} is above the typical TikTok average of 3-5%."
-        })
-    elif avg_engagement < 0.02:
-        insights.append({
-            "type": "warning",
-            "title": "Low Engagement Rate",
-            "description": f"Your engagement rate of {avg_engagement:.2%} could be improved. Consider more interactive content."
-        })
-        recommendations.append({
-            "title": "Boost Engagement",
-            "description": "Try asking questions in your videos, using trending sounds, or creating content that encourages comments."
+            "type": "info",
+            "title": "Performance Insight",
+            "description": insight
         })
     
-    # Video performance consistency
-    view_counts = [v.view_count or 0 for v in recent_videos]
-    if len(view_counts) > 1:
-        view_variance = max(view_counts) / min(view_counts) if min(view_counts) > 0 else 0
-        if view_variance > 10:
-            insights.append({
-                "type": "info",
-                "title": "Inconsistent Performance",
-                "description": "Your video performance varies significantly. Some content types may resonate better with your audience."
-            })
-            recommendations.append({
-                "title": "Analyze Top Performers",
-                "description": "Study your highest-performing videos to identify successful patterns in content, timing, or hashtags."
-            })
-    
-    # Posting frequency
-    if len(recent_videos) < 5:
+    # Add recommendations based on insights
+    if insights_data.get('posting_consistency') == 'irregular':
         recommendations.append({
-            "title": "Increase Posting Frequency",
-            "description": "Consider posting more regularly to maintain audience engagement and algorithm visibility."
+            "title": "Improve Posting Consistency",
+            "description": "Try to maintain a regular posting schedule to keep your audience engaged."
         })
     
     return {
         "insights": insights,
         "recommendations": recommendations,
         "metrics": {
-            "avg_views": avg_views,
-            "avg_likes": avg_likes,
-            "avg_engagement_rate": avg_engagement,
-            "total_videos_analyzed": len(recent_videos)
+            "avg_views": insights_data.get('avg_views', 0),
+            "avg_likes": insights_data.get('avg_likes', 0),
+            "avg_engagement_rate": insights_data.get('avg_engagement_rate', 0),
+            "total_videos_analyzed": insights_data.get('total_videos_analyzed', 0)
         }
+    }
+
+@router.post("/calculate")
+async def calculate_analytics(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Trigger analytics calculation for the user's profile"""
+    analytics_engine = AnalyticsEngine(db)
+    analytics_data = analytics_engine.calculate_profile_analytics(current_user.id)
+    
+    if not analytics_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="TikTok profile not found or no data available"
+        )
+    
+    return {
+        "message": "Analytics calculated successfully",
+        "data": analytics_data
     }

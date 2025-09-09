@@ -92,8 +92,8 @@ export default function HomePage() {
       <main className="container mx-auto px-6 py-12">
         <div className="text-center max-w-4xl mx-auto">
           <h2 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
-            Navigate Your TikTok Success with
-            <span className="text-transparent bg-clip-text bg-gradient-primary"> Peachy Insights</span>
+            Navigate Your TikTok Success with{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">Data-Driven Insights</span>
           </h2>
           
           <p className="text-xl text-gray-600 mb-12 leading-relaxed">
@@ -122,7 +122,7 @@ export default function HomePage() {
             <div className="w-12 h-12 bg-peach-100 rounded-xl flex items-center justify-center mb-6">
               <span className="text-2xl">🍑</span>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Performance Analytics</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Performance Analytics in Your Niche</h3>
             <p className="text-gray-600 leading-relaxed">
               Track your reach, engagement, and growth with comprehensive analytics that make complex data simple to understand.
             </p>
@@ -140,11 +140,11 @@ export default function HomePage() {
 
           <div className="bg-white rounded-2xl p-8 shadow-lg card-hover">
             <div className="w-12 h-12 bg-peach-300 rounded-xl flex items-center justify-center mb-6">
-              <span className="text-2xl">🎯</span>
+              <span className="text-2xl">💝</span>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Personalized Insights</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Engaged Leads</h3>
             <p className="text-gray-600 leading-relaxed">
-              Get tailored recommendations based on your content, audience, and business goals to maximize your impact.
+              Identify your most engaged followers and get actionable strategies to turn them into collaboration partners.
             </p>
           </div>
         </div>

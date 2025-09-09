@@ -26,4 +26,3 @@ class User(Base):
     
     # Relationships
     tiktok_profile = relationship("TikTokProfile", back_populates="user", uselist=False)
-    recommendations = relationship("CreatorRecommendation", back_populates="user")

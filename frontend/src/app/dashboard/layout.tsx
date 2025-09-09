@@ -8,7 +8,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Heart
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Overview', href: '/dashboard', icon: BarChart3 },
   { name: 'Analytics', href: '/dashboard/analytics', icon: TrendingUp },
   { name: 'Recommendations', href: '/dashboard/recommendations', icon: Users },
+  { name: 'Engaged Leads', href: '/dashboard/engaged-leads', icon: Heart },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 

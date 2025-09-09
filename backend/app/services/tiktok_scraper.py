@@ -169,6 +169,9 @@ class TikTokScraper:
                     video_data = {
                         "video_url": element.find_element(By.TAG_NAME, "a").get_attribute("href"),
                         "view_count": self._extract_video_views(element),
+                        "like_count": self._extract_video_likes(element),
+                        "comment_count": self._extract_video_comments(element),
+                        "share_count": self._extract_video_shares(element),
                         "description": self._extract_video_description(element)
                     }
                     videos.append(video_data)
@@ -189,6 +192,61 @@ class TikTokScraper:
         try:
             view_element = element.find_element(By.CSS_SELECTOR, "[data-e2e='video-views']")
             return self._parse_count(view_element.text)
+        except:
+            return None
+
+    def _extract_video_likes(self, element) -> Optional[int]:
+        try:
+            # Try multiple selectors for likes
+            selectors = [
+                "[data-e2e='like-count']",
+                "[data-e2e='video-like-count']", 
+                ".video-feed-item-wrapper .like-count",
+                ".tiktok-1bs0gqm-DivActionItemContainer .like-count"
+            ]
+            for selector in selectors:
+                try:
+                    like_element = element.find_element(By.CSS_SELECTOR, selector)
+                    return self._parse_count(like_element.text)
+                except:
+                    continue
+            return None
+        except:
+            return None
+
+    def _extract_video_comments(self, element) -> Optional[int]:
+        try:
+            # Try multiple selectors for comments
+            selectors = [
+                "[data-e2e='comment-count']",
+                "[data-e2e='video-comment-count']",
+                ".video-feed-item-wrapper .comment-count"
+            ]
+            for selector in selectors:
+                try:
+                    comment_element = element.find_element(By.CSS_SELECTOR, selector)
+                    return self._parse_count(comment_element.text)
+                except:
+                    continue
+            return None
+        except:
+            return None
+
+    def _extract_video_shares(self, element) -> Optional[int]:
+        try:
+            # Try multiple selectors for shares
+            selectors = [
+                "[data-e2e='share-count']",
+                "[data-e2e='video-share-count']",
+                ".video-feed-item-wrapper .share-count"
+            ]
+            for selector in selectors:
+                try:
+                    share_element = element.find_element(By.CSS_SELECTOR, selector)
+                    return self._parse_count(share_element.text)
+                except:
+                    continue
+            return None
         except:
             return None
 

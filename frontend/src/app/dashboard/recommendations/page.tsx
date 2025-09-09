@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { recommendationsApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Tooltip } from '@/components/Tooltip';
 import { 
   ArrowLeft,
   Lightbulb,
@@ -138,14 +139,18 @@ export default function RecommendationsPage() {
             {recommendations?.content_recommendations?.map((rec: ContentRecommendation, index: number) => (
               <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900">{rec.title}</h3>
+                  <Tooltip content={`This recommendation is based on analysis of successful creators in your niche. Impact score of ${rec.impact_score}/10 indicates the potential effectiveness of implementing this strategy.`}>
+                    <h3 className="font-semibold text-gray-900 cursor-help">{rec.title} ℹ️</h3>
+                  </Tooltip>
                   <div className="flex items-center space-x-2">
                     <span className="px-2 py-1 text-xs bg-primary-100 text-primary-800 rounded-full">
                       {rec.category}
                     </span>
                     <div className="flex items-center">
                       <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                      <span className="text-sm font-medium">{rec.impact_score}/10</span>
+                      <Tooltip content="Impact score from 1-10 based on analysis of successful creators who use this strategy. Higher scores indicate greater potential for growth.">
+                        <span className="text-sm font-medium cursor-help">{rec.impact_score}/10</span>
+                      </Tooltip>
                     </div>
                   </div>
                 </div>
@@ -161,7 +166,9 @@ export default function RecommendationsPage() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Target className="w-5 h-5 mr-2 text-primary-600" />
-            Top 5 Followers from Your Target Audience
+            <Tooltip content="These followers are recommended because they have high follower counts in your target audience and show strong engagement patterns. They're ideal for collaborations or partnerships.">
+              <span className="cursor-help">Top 5 Followers from Your Target Audience ℹ️</span>
+            </Tooltip>
           </CardTitle>
           <p className="text-sm text-gray-600 mt-1">
             Ranked by follower count and audience match score

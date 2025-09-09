@@ -6,6 +6,7 @@ import { analyticsApi, usersApi, authApi, tiktokApi } from '@/lib/api';
 import Cookies from 'js-cookie';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Tooltip } from '@/components/Tooltip';
 import { 
   TrendingUp, 
   Users, 
@@ -63,7 +64,7 @@ export default function DashboardPage() {
   const loadRealData = async () => {
     try {
       // Load analytics from backend
-      const analyticsData = await analyticsApi.getOverview();
+      const analyticsData = await analyticsApi.getAnalytics();
       const profileData = await usersApi.getCurrentUser();
       
       // Try to load TikTok profile data
@@ -256,7 +257,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="ml-4 flex-1">
-              <p className="text-sm font-medium text-gray-500">Followers</p>
+              <Tooltip content="Total number of people following your TikTok account. This data is scraped directly from your TikTok profile page.">
+                <p className="text-sm font-medium text-gray-500 cursor-help">Followers ℹ️</p>
+              </Tooltip>
               <div className="flex items-center">
                 <p className="text-2xl font-bold text-gray-900">
                   {formatNumber(tiktokProfile?.follower_count || analytics?.total_followers)}
@@ -282,7 +285,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="ml-4 flex-1">
-              <p className="text-sm font-medium text-gray-500">Total Likes</p>
+              <Tooltip content="Total likes received across all your TikTok videos. This is the cumulative number displayed on your profile page.">
+                <p className="text-sm font-medium text-gray-500 cursor-help">Total Likes ℹ️</p>
+              </Tooltip>
               <p className="text-2xl font-bold text-gray-900">
                 {formatNumber(tiktokProfile?.likes_count || analytics?.total_likes)}
               </p>
@@ -299,7 +304,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="ml-4 flex-1">
-              <p className="text-sm font-medium text-gray-500">Videos</p>
+              <Tooltip content="Total number of videos published on your TikTok account. This count is scraped from your profile page.">
+                <p className="text-sm font-medium text-gray-500 cursor-help">Videos ℹ️</p>
+              </Tooltip>
               <p className="text-2xl font-bold text-gray-900">
                 {formatNumber(tiktokProfile?.video_count || analytics?.total_videos)}
               </p>
@@ -316,11 +323,14 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="ml-4 flex-1">
-              <p className="text-sm font-medium text-gray-500">Avg. Engagement</p>
+              <Tooltip content={`Average engagement rate calculated as: (Likes + Comments + Shares) ÷ Views × 100. ${analytics?.is_estimated ? 'Currently estimated at 4% (industry average) due to limited engagement data from TikTok profile pages.' : 'Based on actual video engagement data.'}`}>
+                <p className="text-sm font-medium text-gray-500 cursor-help">Avg. Engagement ℹ️</p>
+              </Tooltip>
               <p className="text-2xl font-bold text-gray-900">
                 {formatPercentage(analytics?.avg_engagement_rate)}
+                {analytics?.is_estimated && <span className="text-sm text-orange-500 ml-1">*</span>}
               </p>
-              <p className="text-xs text-gray-400">Rate</p>
+              <p className="text-xs text-gray-400">{analytics?.is_estimated ? 'Estimated' : 'Rate'}</p>
             </div>
           </CardContent>
         </Card>
@@ -339,14 +349,18 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                 <div>
-                  <p className="font-semibold text-gray-900">Followers Match</p>
+                  <Tooltip content="Percentage of your followers who match your target audience profile. Calculated by analyzing follower bios, usernames, and engagement patterns for fashion/style keywords and demographics.">
+                    <p className="font-semibold text-gray-900 cursor-help">Followers Match ℹ️</p>
+                  </Tooltip>
                   <p className="text-xs text-gray-600">Based on bio & content analysis</p>
                 </div>
                 <div className="text-xl font-bold text-green-600">78.3%</div>
               </div>
               <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                 <div>
-                  <p className="font-semibold text-gray-900">Engagement Match</p>
+                  <Tooltip content="Percentage of your video likes and comments that come from your target audience. Higher percentages indicate better content alignment with your intended viewers.">
+                    <p className="font-semibold text-gray-900 cursor-help">Engagement Match ℹ️</p>
+                  </Tooltip>
                   <p className="text-xs text-gray-600">Likes from target audience</p>
                 </div>
                 <div className="text-xl font-bold text-blue-600">82.1%</div>

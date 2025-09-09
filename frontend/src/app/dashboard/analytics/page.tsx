@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { analyticsApi } from '@/lib/api';
+import { Tooltip } from '@/components/Tooltip';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { 
@@ -28,22 +29,29 @@ export default function AnalyticsPage() {
 
   const fetchAnalytics = async () => {
     try {
-      const data = await analyticsApi.getOverview();
+      const data = await analyticsApi.getAnalytics();
       setAnalytics(data);
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
-      // Use sample data for demo
-      setAnalytics({
-        total_followers: 125000,
-        total_likes: 2500000,
-        total_videos: 89,
-        engagement_rate: 4.2,
-        follower_growth_rate: 12.5,
-        target_audience_followers: 78.3,
-        target_audience_likes: 82.1
-      });
+      // Don't use fallback demo data - show error instead
+      setAnalytics(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getTooltipContent = (key: string, analytics: any) => {
+    switch (key) {
+      case 'followers':
+        return 'Total number of people following your TikTok account. This data is scraped directly from your TikTok profile page.';
+      case 'likes':
+        return 'Total likes received across all your TikTok videos. This is the cumulative number displayed on your profile page.';
+      case 'videos':
+        return 'Total number of videos published on your TikTok account. This count is scraped from your profile page.';
+      case 'engagement':
+        return `Average engagement rate calculated as: (Likes + Comments + Shares) ÷ Views × 100. ${analytics?.is_estimated ? 'Currently estimated at 4% (industry average) due to limited engagement data from TikTok profile pages.' : 'Based on actual video engagement data.'}`;
+      default:
+        return 'Analytics metric calculated from your TikTok data.';
     }
   };
 
@@ -51,7 +59,7 @@ export default function AnalyticsPage() {
     { key: 'followers', label: 'Followers', icon: Users, value: analytics?.total_followers },
     { key: 'likes', label: 'Likes', icon: Heart, value: analytics?.total_likes },
     { key: 'videos', label: 'Videos', icon: Video, value: analytics?.total_videos },
-    { key: 'engagement', label: 'Engagement Rate', icon: TrendingUp, value: analytics?.engagement_rate, isPercentage: true }
+    { key: 'engagement', label: 'Engagement Rate', icon: TrendingUp, value: analytics?.avg_engagement_rate, isPercentage: true }
   ];
 
   if (loading) {
@@ -96,12 +104,15 @@ export default function AnalyticsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{metric.label}</p>
+                  <Tooltip content={getTooltipContent(metric.key, analytics)}>
+                    <p className="text-sm font-medium text-gray-600 cursor-help">{metric.label} ℹ️</p>
+                  </Tooltip>
                   <p className="text-3xl font-bold text-gray-900">
                     {metric.isPercentage 
                       ? formatPercentage(metric.value) 
                       : formatNumber(metric.value)
                     }
+                    {metric.key === 'engagement' && analytics?.is_estimated && <span className="text-sm text-orange-500 ml-1">*</span>}
                   </p>
                 </div>
                 <metric.icon className="w-8 h-8 text-primary-600" />
