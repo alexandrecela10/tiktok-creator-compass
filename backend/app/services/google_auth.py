@@ -13,6 +13,10 @@ class GoogleAuthService:
 
     def get_authorization_url(self) -> str:
         """Generate Google OAuth authorization URL"""
+        # Check if required configuration is available
+        if not self.client_id or not self.client_secret or not self.redirect_uri:
+            raise ValueError("Google OAuth configuration is incomplete. Please check environment variables.")
+        
         flow = Flow.from_client_config(
             {
                 "web": {

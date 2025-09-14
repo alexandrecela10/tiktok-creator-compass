@@ -36,6 +36,7 @@ try:
     )
     
     app.include_router(api_router, prefix=settings.API_V1_STR)
+    print(f"API routes loaded successfully with prefix: {settings.API_V1_STR}")
     
 except Exception as e:
     print(f"Warning: Could not load full configuration: {e}")
@@ -47,3 +48,11 @@ except Exception as e:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    
+    # Try to load API routes without config
+    try:
+        from app.api.v1.api import api_router
+        app.include_router(api_router, prefix="/api/v1")
+        print("API routes loaded with default prefix")
+    except Exception as e2:
+        print(f"Failed to load API routes: {e2}")

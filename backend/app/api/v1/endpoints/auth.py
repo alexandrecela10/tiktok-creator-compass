@@ -24,9 +24,20 @@ class AuthUrlResponse(BaseModel):
 @router.get("/google/url", response_model=AuthUrlResponse)
 async def get_google_auth_url():
     """Get Google OAuth authorization URL"""
-    auth_service = GoogleAuthService()
-    auth_url = auth_service.get_authorization_url()
-    return AuthUrlResponse(auth_url=auth_url)
+    try:
+        auth_service = GoogleAuthService()
+        auth_url = auth_service.get_authorization_url()
+        return AuthUrlResponse(auth_url=auth_url)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Google OAuth configuration error: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate Google OAuth URL: {str(e)}"
+        )
 
 @router.post("/google/callback", response_model=GoogleAuthResponse)
 async def google_auth_callback(
