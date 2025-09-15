@@ -2,23 +2,25 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 import os
 
+# Fix malformed DATABASE_URL that starts with https://
+# This logic must be outside the Settings class to avoid Pydantic validation
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+if DATABASE_URL and DATABASE_URL.startswith("https://"):
+    # Railway provides database variables separately, construct proper URL
+    PGHOST = os.getenv("PGHOST", "localhost")
+    PGUSER = os.getenv("PGUSER", "postgres")
+    PGPASSWORD = os.getenv("PGPASSWORD", "")
+    PGDATABASE = os.getenv("PGDATABASE", "postgres")
+    PGPORT = os.getenv("PGPORT", "5432")
+    DATABASE_URL = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
+
 class Settings(BaseSettings):
     # API Configuration
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "TikTok Creator Compass"
     
-    # Database - make optional with fallback
-    DATABASE_URL: Optional[str] = os.getenv("DATABASE_URL", "sqlite:///./test.db")
-    
-    # Fix malformed DATABASE_URL that starts with https://
-    if DATABASE_URL and DATABASE_URL.startswith("https://"):
-        # Railway provides database variables separately, construct proper URL
-        PGHOST = os.getenv("PGHOST", "localhost")
-        PGUSER = os.getenv("PGUSER", "postgres")
-        PGPASSWORD = os.getenv("PGPASSWORD", "")
-        PGDATABASE = os.getenv("PGDATABASE", "postgres")
-        PGPORT = os.getenv("PGPORT", "5432")
-        DATABASE_URL = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
+    # Database - use the corrected DATABASE_URL
+    DATABASE_URL: Optional[str] = DATABASE_URL
     
     # Security - make optional with fallback
     SECRET_KEY: Optional[str] = os.getenv("SECRET_KEY", "fallback-secret-key-for-health-checks")
