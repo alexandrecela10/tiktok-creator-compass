@@ -5,14 +5,29 @@ import os
 # Fix malformed DATABASE_URL that starts with https://
 # This logic must be outside the Settings class to avoid Pydantic validation
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+
+# Debug: Print original DATABASE_URL
+print(f"DEBUG: Original DATABASE_URL = {DATABASE_URL}")
+
+# Check if DATABASE_URL is malformed (starts with https://)
 if DATABASE_URL and DATABASE_URL.startswith("https://"):
+    print("DEBUG: Detected malformed DATABASE_URL starting with https://, constructing from Railway variables...")
+    
     # Railway provides database variables separately, construct proper URL
     PGHOST = os.getenv("PGHOST", "localhost")
     PGUSER = os.getenv("PGUSER", "postgres")
     PGPASSWORD = os.getenv("PGPASSWORD", "")
     PGDATABASE = os.getenv("PGDATABASE", "postgres")
     PGPORT = os.getenv("PGPORT", "5432")
-    DATABASE_URL = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
+    
+    # URL encode password for special characters
+    from urllib.parse import quote_plus
+    encoded_password = quote_plus(PGPASSWORD)
+    
+    DATABASE_URL = f"postgresql://{PGUSER}:{encoded_password}@{PGHOST}:{PGPORT}/{PGDATABASE}"
+    print(f"DEBUG: Constructed DATABASE_URL = {DATABASE_URL}")
+else:
+    print("DEBUG: DATABASE_URL looks valid, using as-is")
 
 class Settings(BaseSettings):
     # API Configuration
