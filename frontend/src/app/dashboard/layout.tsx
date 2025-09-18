@@ -14,8 +14,6 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { authApi } from '@/lib/api';
-import Cookies from 'js-cookie';
 import toast from 'react-hot-toast';
 
 const navigation = [
@@ -42,27 +40,32 @@ export default function DashboardLayout({
 
   const loadUserData = async () => {
     try {
-      const token = Cookies.get('access_token');
-      if (!token) {
-        window.location.href = '/';
-        return;
-      }
-
-      const userData = await authApi.verifyToken();
+      // Get user data from localStorage
+      const userData = localStorage.getItem('user_data');
+      const parsedData = userData ? JSON.parse(userData) : null;
+      
       setUser({
-        ...userData,
-        avatar_url: userData.avatar_url || 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑'
+        name: parsedData?.name || 'Demo User',
+        tiktok_username: parsedData?.tiktok_username || '@demo_creator',
+        avatar_url: 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑'
       });
       setLoading(false);
     } catch (error) {
       console.error('Failed to load user:', error);
-      Cookies.remove('access_token');
-      window.location.href = '/';
+      // Set default demo user
+      setUser({
+        name: 'Demo User',
+        tiktok_username: '@demo_creator',
+        avatar_url: 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑'
+      });
+      setLoading(false);
     }
   };
 
   const handleLogout = () => {
-    Cookies.remove('access_token');
+    // Clear localStorage and redirect to homepage
+    localStorage.removeItem('onboarding_complete');
+    localStorage.removeItem('user_data');
     toast.success('🍑 Logged out successfully');
     window.location.href = '/';
   };

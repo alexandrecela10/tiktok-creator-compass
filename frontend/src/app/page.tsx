@@ -8,16 +8,14 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user has completed onboarding
+    // Only redirect if user has completed onboarding
     const onboardingComplete = localStorage.getItem('onboarding_complete');
     
     if (onboardingComplete === 'true') {
       // User completed onboarding, go to dashboard
       router.push('/dashboard');
-    } else {
-      // User needs to complete onboarding
-      router.push('/onboarding');
     }
+    // If onboarding not complete, stay on homepage to show landing page
   }, [router]);
 
   const handleGetStarted = () => {
