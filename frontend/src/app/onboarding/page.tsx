@@ -2,15 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { usersApi, tiktokApi, authApi } from '@/lib/api';
-import { User } from '@/types';
+import { tiktokApi } from '@/lib/api';
 import { TrendingUp, User as UserIcon, Target, ArrowRight, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Cookies from 'js-cookie';
 
 export default function OnboardingPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     tiktokUsername: '',
@@ -20,45 +17,25 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    checkUserStatus();
-  }, []);
-
-  const checkUserStatus = async () => {
-    try {
-      const token = Cookies.get('access_token');
-      if (!token) {
-        router.push('/');
-        return;
-      }
-
-      // Verify token and get user info
-      const user = await authApi.verifyToken();
-      
-      // If user already has TikTok username, redirect to dashboard
-      if (user.tiktok_username) {
-        router.push('/dashboard');
-        return;
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      Cookies.remove('access_token');
-      router.push('/');
+    // Check if user already completed onboarding
+    const onboardingComplete = localStorage.getItem('onboarding_complete');
+    if (onboardingComplete === 'true') {
+      router.push('/dashboard');
     }
-  };
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
     try {
-      // Call real backend API to complete onboarding
-      const response = await usersApi.completeOnboarding({
+      // Store onboarding data locally (no backend auth needed)
+      localStorage.setItem('onboarding_complete', 'true');
+      localStorage.setItem('user_data', JSON.stringify({
         tiktok_username: formData.tiktokUsername,
         offer_description: formData.offerDescription,
         target_audience: formData.targetAudience
-      });
+      }));
       
       toast.success('🍑 Profile setup complete! Welcome to your dashboard.');
       

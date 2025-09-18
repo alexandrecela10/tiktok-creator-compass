@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { analyticsApi, usersApi, authApi, tiktokApi } from '@/lib/api';
-import Cookies from 'js-cookie';
+import { analyticsApi, tiktokApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/Tooltip';
@@ -30,96 +29,72 @@ export default function DashboardPage() {
   const [scraping, setScraping] = useState(false);
   const [selectedVideoMetric, setSelectedVideoMetric] = useState('views');
 
+  const router = useRouter();
+
   useEffect(() => {
-    checkAuthAndLoadData();
+    checkOnboardingAndLoadData();
   }, []);
 
-  const checkAuthAndLoadData = async () => {
+  const checkOnboardingAndLoadData = async () => {
     try {
-      const token = Cookies.get('access_token');
-      if (!token) {
-        window.location.href = '/';
+      // Check if user completed onboarding
+      const onboardingComplete = localStorage.getItem('onboarding_complete');
+      if (onboardingComplete !== 'true') {
+        router.push('/onboarding');
         return;
       }
 
-      // Verify token and get user info
-      const user = await authApi.verifyToken();
-      
-      // If user hasn't completed onboarding, redirect
-      if (!user.tiktok_username) {
-        window.location.href = '/onboarding';
-        return;
-      }
-
-      // Load real analytics data
-      await loadRealData();
+      // Load demo/local data
+      await loadDemoData();
       
     } catch (error) {
-      console.error('Auth check failed:', error);
-      Cookies.remove('access_token');
-      window.location.href = '/';
+      console.error('Data loading failed:', error);
+      router.push('/onboarding');
     }
   };
 
-  const loadRealData = async () => {
+  const loadDemoData = async () => {
     try {
-      // Load analytics from backend
-      const analyticsData = await analyticsApi.getAnalytics();
-      const profileData = await usersApi.getCurrentUser();
+      // Get user data from localStorage
+      const userData = localStorage.getItem('user_data');
+      const profileData = userData ? JSON.parse(userData) : {
+        tiktok_username: '@demo_creator',
+        offer_description: 'Demo creator profile',
+        target_audience: 'Demo audience'
+      };
       
-      // Try to load TikTok profile data
-      let tiktokData = null;
-      try {
-        tiktokData = await tiktokApi.getProfile();
-        setTiktokProfile(tiktokData);
-      } catch (error) {
-        console.log('No TikTok profile data found');
-      }
+      // Set demo analytics data
+      const demoAnalytics = {
+        total_followers: 12500,
+        total_likes: 145000,
+        total_videos: 87,
+        avg_engagement_rate: 4.2,
+        follower_growth_7d: 156
+      };
       
-      setAnalytics(analyticsData);
+      setAnalytics(demoAnalytics);
       setProfile({
         ...profileData,
-        avatar_url: profileData.avatar_url || 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑'
+        id: 1,
+        display_name: profileData.name || 'Demo Creator',
+        bio: profileData.offer_description || 'Fashion & lifestyle content creator 🍑✨',
+        avatar_url: 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑',
+        is_verified: false,
+        last_scraped_at: new Date().toISOString()
       });
       setLoading(false);
       
     } catch (error) {
       console.error('Failed to load data:', error);
-      // Fallback to demo data if API fails
-      loadDemoData();
+      setLoading(false);
     }
-  };
-
-  const loadDemoData = () => {
-    // Always load demo data without any authentication checks
-    const demoAnalytics = {
-      total_followers: 12500,
-      total_likes: 145000,
-      total_videos: 87,
-      avg_engagement_rate: 4.2,
-      follower_growth_7d: 156
-    };
-    
-    const demoProfile = {
-      id: 1,
-      tiktok_username: 'demo_creator',
-      display_name: 'Demo Creator',
-      bio: 'Fashion & lifestyle content creator 🍑✨',
-      avatar_url: 'https://via.placeholder.com/64x64/f8a87d/ffffff?text=🍑',
-      is_verified: false,
-      last_scraped_at: new Date().toISOString()
-    };
-    
-    setAnalytics(demoAnalytics);
-    setProfile(demoProfile);
-    setLoading(false);
   };
 
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await loadRealData();
+      await loadDemoData();
       toast.success('🍑 Data refreshed successfully!');
     } catch (error) {
       console.error('Refresh failed:', error);
