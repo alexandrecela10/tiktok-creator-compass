@@ -10,16 +10,27 @@ export default function HomePage() {
   useEffect(() => {
     // Only redirect if user has completed onboarding
     const onboardingComplete = localStorage.getItem('onboarding_complete');
+    console.log('Homepage: onboarding_complete =', onboardingComplete);
     
     if (onboardingComplete === 'true') {
+      console.log('Homepage: Redirecting to dashboard');
       // User completed onboarding, go to dashboard
       router.push('/dashboard');
+    } else {
+      console.log('Homepage: Staying on homepage');
     }
     // If onboarding not complete, stay on homepage to show landing page
   }, [router]);
 
   const handleGetStarted = () => {
     router.push('/onboarding');
+  };
+
+  const handleReset = () => {
+    localStorage.removeItem('onboarding_complete');
+    localStorage.removeItem('user_data');
+    console.log('App state reset');
+    window.location.reload();
   };
 
   return (
@@ -33,6 +44,12 @@ export default function HomePage() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900">TikTok Creator Compass</h1>
           </div>
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+          >
+            Reset App
+          </button>
         </div>
       </header>
 
