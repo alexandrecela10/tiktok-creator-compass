@@ -3,82 +3,49 @@ from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.db.session import get_db
-from app.services.google_auth import GoogleAuthService
 from app.core.security import create_access_token
 from app.models.user import User
 
 router = APIRouter()
 security = HTTPBearer()
 
-class GoogleAuthRequest(BaseModel):
-    code: str
+class LoginRequest(BaseModel):
+    email: str
+    name: str
 
-class GoogleAuthResponse(BaseModel):
+class AuthResponse(BaseModel):
     access_token: str
     token_type: str
     user: dict
 
-class AuthUrlResponse(BaseModel):
-    auth_url: str
-
-@router.get("/google/url", response_model=AuthUrlResponse)
-async def get_google_auth_url():
-    """Get Google OAuth authorization URL"""
-    try:
-        auth_service = GoogleAuthService()
-        auth_url = auth_service.get_authorization_url()
-        return AuthUrlResponse(auth_url=auth_url)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Google OAuth configuration error: {str(e)}"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate Google OAuth URL: {str(e)}"
-        )
-
-@router.post("/google/callback", response_model=GoogleAuthResponse)
-async def google_auth_callback(
-    auth_request: GoogleAuthRequest,
+@router.post("/login", response_model=AuthResponse)
+async def login(
+    login_request: LoginRequest,
     db: Session = Depends(get_db)
 ):
-    """Handle Google OAuth callback"""
-    auth_service = GoogleAuthService()
-    
-    # Exchange authorization code for token and get user info
-    user_info = await auth_service.exchange_code_for_token(auth_request.code)
-    if not user_info:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Google authorization code"
-        )
+    """Simple login endpoint - creates or finds user by email"""
     
     # Check if user exists
-    user = db.query(User).filter(User.google_id == user_info['google_id']).first()
+    user = db.query(User).filter(User.email == login_request.email).first()
     
     if not user:
         # Create new user
         user = User(
-            email=user_info['email'],
-            google_id=user_info['google_id'],
-            name=user_info['name'],
-            avatar_url=user_info.get('avatar_url')
+            email=login_request.email,
+            name=login_request.name
         )
         db.add(user)
         db.commit()
         db.refresh(user)
     else:
         # Update existing user info
-        user.name = user_info['name']
-        user.avatar_url = user_info.get('avatar_url')
+        user.name = login_request.name
         db.commit()
     
     # Create access token
     access_token = create_access_token(data={"sub": str(user.id)})
     
-    return GoogleAuthResponse(
+    return AuthResponse(
         access_token=access_token,
         token_type="bearer",
         user={

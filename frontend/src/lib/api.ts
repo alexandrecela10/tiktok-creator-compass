@@ -23,29 +23,21 @@ api.interceptors.request.use((config) => {
 
 // Auth API
 export const authApi = {
-  getGoogleAuthUrl: async (): Promise<{ auth_url: string }> => {
-    if (IS_DEMO_MODE) {
-      return { auth_url: '#demo' };
-    }
-    const response = await api.get('/auth/google/url');
-    return response.data;
-  },
-
-  googleCallback: async (code: string): Promise<{ access_token: string; user: User }> => {
+  login: async (email: string, name: string): Promise<{ access_token: string; user: User }> => {
     if (IS_DEMO_MODE) {
       return {
         access_token: 'demo_token_12345',
         user: {
           id: 1,
-          email: 'demo@example.com',
-          name: 'Demo User',
+          email: email,
+          name: name,
           tiktok_username: '@demo_creator',
           weekly_updates_enabled: true,
           is_active: true
         }
       };
     }
-    const response = await api.post('/auth/google/callback', { code });
+    const response = await api.post('/auth/login', { email, name });
     return response.data;
   },
 

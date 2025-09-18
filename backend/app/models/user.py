@@ -8,7 +8,6 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    google_id = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     avatar_url = Column(String, nullable=True)
     tiktok_username = Column(String, unique=True, index=True, nullable=True)
